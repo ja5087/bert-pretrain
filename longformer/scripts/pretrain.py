@@ -1,21 +1,21 @@
 import argparse
 import glob
+import logging
+import math
 import os
 import random
-import logging
-import numpy as np
-import math
-from tqdm import tqdm
 import time
-import torch
-from transformers import AutoTokenizer, AutoModelForMaskedLM
-from transformers import DataCollatorForLanguageModeling
-from transformers.optimization import AdamW, get_linear_schedule_with_warmup
 
-from torch.utils.data import Dataset, DataLoader
+import numpy as np
 import pytorch_lightning as ptl
+import torch
+from pytorch_lightning.callbacks import LearningRateLogger, ModelCheckpoint
 from pytorch_lightning.logging.test_tube import TestTubeLogger
-from pytorch_lightning.callbacks import ModelCheckpoint, LearningRateLogger
+from torch.utils.data import DataLoader, Dataset
+from tqdm import tqdm
+
+from transformers import AutoConfig, AutoModelForMaskedLM, AutoTokenizer, DataCollatorForLanguageModeling
+from transformers.optimization import AdamW, get_linear_schedule_with_warmup
 
 
 logging.basicConfig(level=logging.INFO)
@@ -184,7 +184,9 @@ class Pretrainer(ptl.LightningModule):
         self.args = hparams
         self.hparams = self.args
 
-        self.model = AutoModelForMaskedLM.from_pretrained(args.model)
+        config = AutoConfig.from_pretrained(args.model)
+        # Do it from scratch
+        self.model = AutoModelForMaskedLM.from_config(config)
         self.config = self.model.config
         tokenizer = AutoTokenizer.from_pretrained(args.tokenizer)
         self.pad_token_id = tokenizer.pad_token_id
